@@ -1,0 +1,15 @@
+{
+    "manifest_version": 2,
+    "name": "Censor Bad Language",
+    "description": "Censor all bad language and replace them with funnies.",
+    "version": "0.1.0",
+    
+    "content_scripts": [
+        {
+        "matches": ["<all_urls>"],
+        "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
+        "js": ["script.js"],
+        "css": ["styles.css"]
+    }
+  ]
+}
