@@ -8,8 +8,7 @@
         {
         "matches": ["<all_urls>"],
         "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
-        "js": ["script.js"],
-        "css": ["styles.css"]
+        "js": ["script.js"]
     }
   ]
 }
