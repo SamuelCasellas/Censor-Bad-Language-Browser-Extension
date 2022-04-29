@@ -17,6 +17,8 @@
 badWords = {
     "shpx": "flip",
     "shx": "flip",
+    "shpxvat": "flipping",
+    "shpxre": "flipper",
     "ovgpu": "buttercup",
     "fuvg": "whiz",
     "fuvggl": "whizzy",
@@ -92,12 +94,13 @@ observer.observe(document.body,
     });
 
 function findText(element) {
-    if (element.tagName == "SPAN" || element.tagName == "p" || element.tagName == "YT-FORMATTED-STRING") { // element.nodeType === Text.TEXT_NODE && 
-        replaceText(element);
-    }
     if (element.hasChildNodes()) {
         element.childNodes.forEach(findText); // Dig deeper in the DOM
     } 
+    else if (element.nodeType === Text.TEXT_NODE) { // element.nodeType === Text.TEXT_NODE && 
+        replaceText(element);
+    }
+    
 }
 
 function replaceText(textElement) {
