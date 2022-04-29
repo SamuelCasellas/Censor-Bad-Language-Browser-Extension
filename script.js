@@ -20,9 +20,12 @@ badWords = {
     "ovgpu": "buttercup",
     "fuvg": "whiz",
     "fuvggl": "whizzy",
-    "qnza": "wham",
+    "qnza": "dang",
+    "qnzzvg": "darn it",
     "pbpx": "hack",
-    "fhpx": "stink",
+    "nff": "bum",
+    "nffubyr": "bummer",
+   // "fhpx": "stink",
     "phpx": "hack",
     "tbq": "doge",
     "zl tbq": "holy grail",
@@ -38,7 +41,7 @@ badWords = {
     "yznb": "hahaha",
     "tgsb": "please leave",
     "zbgure shpxre": "imbecile",
-
+    "jgs": "what"
 };
 
 decryptionKey = {
@@ -73,7 +76,7 @@ decryptionKey = {
 
 setTimeout(() => {
     findText(document.body);
-}, 500) // After half a second of load time
+}, 1000) // After a second of load time
 
 
 const observer = new MutationObserver((mutations) => {
@@ -98,11 +101,13 @@ function findText(element) {
 }
 
 function replaceText(textElement) {
+    textElement.textContent = ` ${textElement.textContent} `;
     for (let encryptedBadWord in badWords) {
-        console.log(textElement.textContent)
         var decryptedBadWord = decrypt(encryptedBadWord);
-        eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
+        // eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
+        eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
     }
+    textElement.textContent = textElement.textContent.trim()
 }
 
 function decrypt(word) {
