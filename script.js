@@ -30,6 +30,7 @@ badWords = {
     "nffubyr": "bummer",
    // "fhpx": "stink",
     "phpx": "hack",
+    "qvpx": "Moby",
     "tbq": "doge",
     "zl tbq": "holy grail",
     "wrfhf": "Jason",
@@ -45,7 +46,7 @@ badWords = {
     "tgsb": "please leave",
     "zbgure shpxre": "imbecile",
     "jgs": "what",
-    "[ __ ]": "[ __ ]"   // This is for YouTube // [&nbsp;__&nbsp;]
+    "[ __ ]": "[ __ ]"   // 160: [ __ ]  // This is for YouTube
 };
 
 decryptionKey = {
@@ -106,17 +107,33 @@ function findText(element) {
 }
 
 function replaceText(textElement) {
-   // console.log(textElement.textContent)
-    textElement.textContent = ` ${textElement.textContent} `;
-    for (let encryptedBadWord in badWords) {
+   // Some textual elements may be by themselves. Put spaces to accomodate.s
+   textElement.textContent = ` ${textElement.textContent} `;
+   for (let encryptedBadWord in badWords) {
         var decryptedBadWord = encryptedBadWord;
         // For YouTube
-        if (encryptedBadWord != "[ __ ]")
+        if (encryptedBadWord != "[ __ ]") {
             decryptedBadWord = decrypt(encryptedBadWord);
         // eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
-        eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
+            eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
+        }
+        else {
+            try {
+                if (textElement.parentElement.className === "captions-text" || 
+                textElement.parentElement.className === "ytp-caption-segment") {
+             //       textElement.textContent = textElement.textContent.trim()
+
+                    // replace the no break space with a normal space for detection purposes
+                    textElement.textContent = textElement.textContent.replace(/ /gi, " ");
+                    textElement.textContent = textElement.textContent.replace(/\[ __ \]/gi, " ████ ");
+                }
+            }
+            catch(Exception) {} // pass
+        }
+
     }
-    textElement.textContent = textElement.textContent.trim()
+    // Get rid of added spaces.
+    textElement.textContent = textElement.textContent.slice(1, textElement.textContent.length - 1);
 }
 
 function decrypt(word) {

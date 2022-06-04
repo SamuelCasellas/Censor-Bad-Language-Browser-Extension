@@ -1,6 +1,7 @@
 const settingsButton = document.querySelector(".ytp-settings-button");
 const captionsDisplay = document.getElementsByClassName("ytp-caption-window-container")[0];
 const muteButton = document.getElementsByClassName("ytp-mute-button")[0];
+const video = document.querySelector("video");
 
 let hasAutoGenerate = false;
 
@@ -9,7 +10,7 @@ setTimeout(() => {
     if (captionButton.ariaPressed === true) {
         captionButton.click();
     }
-}, 100)
+}, 150)
 
 // Overall premise: Captions must be secretly on to activate
 // muting feature for each foul word presented as its being said.
@@ -49,25 +50,19 @@ const captionOperationHandler = [
                 // Select auto generated
                 caption.click();
                 hasAutoGenerate = true;
-                document.querySelector(".ytp-settings-button").click(); // TESTING THIS
+                settingsButton.click();
             }
         });
     }
-    // ,
-    // // Step 3: wait until the captions generate
-    // function() {
-    //     document.querySelector(".ytp-settings-button").click();
-    // }
-
 ]
 // carry out timely executions
 for (let i = 0; i < captionOperationHandler.length; i++) {
-    setTimeout(captionOperationHandler[i], (i + 1) * 400);
+    setTimeout(captionOperationHandler[i], (i + 1) * 450);
 }
             
 setTimeout(() => {
     if (!hasAutoGenerate)
-        alert("Warning: Auto generate is not available.");
+        alert("Warning: Auto generate is not available. Censoring of foul language cannot be timed properly.");
     else {
         // Step 3: Begin observing the caption screen for mutations (added text nodes).
         // Must be a specific snapshot of the caption screen (not its constant static reference).
@@ -88,16 +83,15 @@ function clearCaptionWindow(window) {
 ////// OBSERVATIONS ///////
 
 const captionPresenceObserver = new MutationObserver((mutations) => {
-    if (mutations[0].addedNodes.length != 0) { // The caption window has captions-text again (nodes length is 1)
-        console.log("Subtitles are back... also here's what we are observing: ", mutations[0].addedNodes[0].childNodes[0])
+    if (mutations[0].addedNodes.length != 0) {
+        // The caption window has captions-text again (nodes length is 1)
         var captionsText = mutations[0].addedNodes[0].childNodes[0]
 
         // watch the initial captionVisualLine
         var captionVisualLine = captionsText.childNodes.item(0);
         // The initial word will not be watched in the observer; account for it.
         censorWord(captionVisualLine.innerText.toString())
-        //    console.log("And its child nodes: ", captionVisualLines)
-        observeNewCaptionVisualLine(captionVisualLine) // May not need a for each here (It's just one)
+        observeNewCaptionVisualLine(captionVisualLine)
         
         // watch for any added captionVisualLines
         newCaptionLineObserver.observe(captionsText, {
@@ -108,7 +102,6 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
 
 const newCaptionLineObserver = new MutationObserver((mutations) => {
     if (mutations.length === 1) {
-        // TEST
         var addedCaptionLine = mutations[0].addedNodes.item(0);
         // The initial word will not be watched in the observer; account for it.
         censorWord(addedCaptionLine.innerText)
@@ -122,11 +115,11 @@ const newCaptionLineObserver = new MutationObserver((mutations) => {
 
             function observeNewCaptionVisualLine(visualLine) {
                 /* Helper function used in captionPresenceObserver for initial caption lines
-                as well as for any additional lines
+                as well as for any additional lines (see newCaptionLineObserver)
                 */
+
                 // visualLine elements only will ever have one child: ytp-caption-segment
                 var captionSegment = visualLine.firstChild; 
-                console.log("Caption NODE: ", captionSegment)
            //     censorWord(captionSegment.innerText)
                 individualLineCaptionObserver.observe(captionSegment, {
                     childList: true, // Observe for individual word insertions
@@ -135,13 +128,23 @@ const newCaptionLineObserver = new MutationObserver((mutations) => {
             }
 
 const individualLineCaptionObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => censorWord(node.textContent))); // May be the error
+    mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
+        censorWord(node.textContent)}
+    )); // May be the error
 });
 
 function censorWord(textNode) {
-    console.log("Word spoken: ", textNode, typeof textNode)
-
-    // TODO
+    console.log(textNode)
+    if (textNode.includes("████")) {
+        video.muted = true;
+        unMute(video);
+    }
 }
 
+function unMute(theVideo) {
+    setTimeout(() => {
+        theVideo.muted = false;
+    }
+    , 600);
+}
 
