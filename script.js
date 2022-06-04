@@ -14,6 +14,7 @@
 // var badWords = require('./bad_words.json');
 // var decryptionKey = require('./decryption_key.json');
 
+
 badWords = {
     "shpx": "flip",
     "shx": "flip",
@@ -43,7 +44,8 @@ badWords = {
     "yznb": "hahaha",
     "tgsb": "please leave",
     "zbgure shpxre": "imbecile",
-    "jgs": "what"
+    "jgs": "what",
+    "[ __ ]": "[ __ ]"   // This is for YouTube // [&nbsp;__&nbsp;]
 };
 
 decryptionKey = {
@@ -104,9 +106,13 @@ function findText(element) {
 }
 
 function replaceText(textElement) {
+   // console.log(textElement.textContent)
     textElement.textContent = ` ${textElement.textContent} `;
     for (let encryptedBadWord in badWords) {
-        var decryptedBadWord = decrypt(encryptedBadWord);
+        var decryptedBadWord = encryptedBadWord;
+        // For YouTube
+        if (encryptedBadWord != "[ __ ]")
+            decryptedBadWord = decrypt(encryptedBadWord);
         // eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
         eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
     }

@@ -1,14 +1,18 @@
 {
     "manifest_version": 2,
     "name": "Censor Bad Language",
-    "description": "Censor all bad language and replace them with funnies.",
-    "version": "0.1.0",
+    "description": "Censor all bad language written on any webpage and mutes similar words on YouTube videos.",
+    "version": "0.2.0",
     
     "content_scripts": [
         {
-        "matches": ["<all_urls>"],
-        "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
-        "js": ["script.js"]
-    }
-  ]
+          "matches": ["<all_urls>"],
+          "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
+          "js": ["script.js"]
+        },
+        {
+          "matches": ["https://www.youtube.com/watch?v=*"],
+          "js": ["script.js", "monitorYtTranscript.js"]
+        }
+    ]
 }
