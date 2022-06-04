@@ -1,33 +1,35 @@
-# Censor-Bad-Language-Browser-Extension
-Here is a cool extension I made that will censor all profane words on the screen as well as mute similar words in YouTube videos.
-
+ 
 # Overview
 
-{Important!  Do not say in this section that this is college assignment.  Talk about what you are trying to accomplish as a software engineer to further your learning.}
+Here is a cool extension I made that will censor all profane words on the screen as well as mute similar words in YouTube videos. This was done with vanilla js.
 
-{Provide a description the software that you wrote.}
+By making an extension for specific websites such as youtube, I became more familiar with the 
+document object model and how to detect mutations using the MutationObserver class. Now I have a better
+understanding how dynamic websites work.
 
-{Describe your purpose for writing this software.}
+The general flow of the program is search the DOM tree for any text nodes already there 
+while searching for dynamically-added nodes and replace any profane words with a censor bar.
+This will also be detected in the subtitles for youtube videos and will then temporarily
+mute the video.
 
-{Provide a link to your YouTube demonstration.  It should be a 4-5 minute demo of the software running and a walkthrough of the code.}
-
-[Software Demo Video](http://youtube.link.goes.here)
+[Software Demo Video](https://youtu.be/n0poQjkZ01w)
 
 # Development Environment
 
-{Describe the tools that you used to develop the software}
-
-{Describe the programming language that you used and any libraries.}
+* VSCode for development of extension
+* Browser's Development Mod3e with extension functionality and console for debugging
 
 # Useful Websites
 
-{Make a list of websites that you found helpful in this project}
-* [Web Site Name](http://url.link.goes.here)
-* [Web Site Name](http://url.link.goes.here)
+* [usefulangle.com](https://usefulangle.com/post/356/javascript-detect-element-added-to-dom) -> How to update new elements being added
+* [youtube.com (Web Dev Simplified)](https://www.youtube.com/watch?v=rymG9UmPuhM) -> Tutorial used as a guide for building a browser extension
+* [javascript.info](https://javascript.info/mutation-observer) -> Helped me understand more of the configuration for the MutationObserver class
+* [stackoverflow](https://stackoverflow.com/questions/4515944/how-to-click-a-browser-button-with-javascript-automatically) -> General references such as how to automatically click a button on the screen.
+* [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) -> For finding an alternative to eval(), which poses a security risk
 
 # Future Work
 
-{Make a list of things that you need to fix, improve, and add in the future.}
-* Item 1
-* Item 2
-* Item 3
+* Add a funtionality for the user to select any funny video they wish that will replace the screen
+temporarily during the mute.
+* Add a feature that deletes any comments found that include links (for spam bots)
+* Use an alternative to eval(). This can impose a security risk.
