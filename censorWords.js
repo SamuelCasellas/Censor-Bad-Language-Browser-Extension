@@ -97,8 +97,12 @@ function replaceText(textElement) {
         var decryptedBadWord = encryptedBadWord;
         if (encryptedBadWord != "[ __ ]") {
             decryptedBadWord = decrypt(encryptedBadWord);
+            decryptedBadWord = " " + decryptedBadWord + " ";
+            // So we can read variables as strings
+            var sRegExpInput = new RegExp(decryptedBadWord, "gi");
+            textElement.textContent = textElement.textContent.replace(sRegExpInput, " ████ ");
             // eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
-            eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
+            // eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
         }
         // For YouTube subtitles
         else {
