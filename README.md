@@ -26,6 +26,7 @@ mute the video.
 * [javascript.info](https://javascript.info/mutation-observer) -> Helped me understand more of the configuration for the MutationObserver class
 * [stackoverflow](https://stackoverflow.com/questions/4515944/how-to-click-a-browser-button-with-javascript-automatically) -> General references such as how to automatically click a button on the screen.
 * [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) -> For finding an alternative to eval(), which poses a security risk
+* [burningignorance.io](http://burnignorance.com/php-programming-tips/how-to-use-a-variable-in-replace-function-of-javascript/) -> Using a regional expression for using variables with the .replace method
 
 # Future Work
 

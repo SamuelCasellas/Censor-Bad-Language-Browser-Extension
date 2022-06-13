@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Censor Bad Language",
   "description": "Censor all bad language written on any webpage and mutes similar words on YouTube videos.",
-  "version": "0.2.0",
+  "version": "0.2.0.1",
   
   "content_scripts": [
       {

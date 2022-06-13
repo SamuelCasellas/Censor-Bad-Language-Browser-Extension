@@ -57,7 +57,7 @@ const captionOperationHandler = [
 ]
 // carry out timely executions
 for (let i = 0; i < captionOperationHandler.length; i++) {
-    setTimeout(captionOperationHandler[i], (i + 1) * 450);
+    setTimeout(captionOperationHandler[i], (i + 1) * 600);
 }
             
 setTimeout(() => {
@@ -133,7 +133,7 @@ const individualLineCaptionObserver = new MutationObserver((mutations) => {
 });
 
 function censorWord(textNode) {
-    console.log(textNode)
+  // DEBUGGER console.log(textNode)
     if (textNode.includes("████")) {
         video.muted = true;
         unMute(video);

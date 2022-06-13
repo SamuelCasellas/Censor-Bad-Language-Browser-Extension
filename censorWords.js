@@ -19,6 +19,7 @@ badWords = {
     "phpx": "",
     "qvpx": "",
     "tbq": "",
+    "tbqqnza": "",
     "zl tbq": "",
     "wrfhf": "",
     "puevfg": "",
@@ -33,6 +34,9 @@ badWords = {
     "tgsb": "",
     "zbgure shpxre": "",
     "jgs": "",
+    "cravf": "",
+    "obbo": "",
+    "intvan": "",
     "[ __ ]": "[ __ ]" // This is for YouTube
 };
 
