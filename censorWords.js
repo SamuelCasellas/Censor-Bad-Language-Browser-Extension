@@ -4,8 +4,8 @@
 // However, the YouTube video censoring will not work if you do this.
 
 badWords = {
-    "shpx": "",
-    "shx": "",
+    "shpx": "freak",
+    "shx": "freak",
     "shpxvat": "",
     "shpxre": "",
     "ovgpu": "",
@@ -18,13 +18,12 @@ badWords = {
     "nffubyr": "",
     "phpx": "",
     "qvpx": "",
-    "tbq": "",
+    "tbq": "doge",
     "tbqqnza": "",
-    "zl tbq": "",
     "wrfhf": "",
     "puevfg": "",
     "onfgneq": "",
-    "uryy": "",
+    "uryy": "heck",
     "phag": "",
     "chffl": "",
     "snttbg": "",
@@ -96,17 +95,24 @@ function findText(element) {
 
 function replaceText(textElement) {
    // Some textual elements may be by themselves. Put spaces to accomodate
-   textElement.textContent = ` ${textElement.textContent} `;
    for (let encryptedBadWord in badWords) {
-        var decryptedBadWord = encryptedBadWord;
         if (encryptedBadWord != "[ __ ]") {
-            decryptedBadWord = decrypt(encryptedBadWord);
-            decryptedBadWord = " " + decryptedBadWord + " ";
-            // So we can read variables as strings
-            var sRegExpInput = new RegExp(decryptedBadWord, "gi");
-            textElement.textContent = textElement.textContent.replace(sRegExpInput, " ████ ");
-            // eval(`textElement.textContent = textElement.textContent.replace(/${decryptedBadWord}/gi, "*${badWords[encryptedBadWord]}*")`);
-            // eval(`textElement.textContent = textElement.textContent.replace(/ ${decryptedBadWord} /gi, " ████ ")`);
+            if (encryptedBadWord != decrypt("nff") && encryptedBadWord != decrypt("uryy")) {
+                var decryptedBadWord = decrypt(encryptedBadWord);
+                // So we can read variables as strings
+                var sRegExpInput = new RegExp(decryptedBadWord, "gi");
+                textElement.textContent = textElement.textContent.replace(sRegExpInput, "████");
+        //     textElement.textContent = textElement.textContent.replace(sRegExpInput, badWords[encryptedBadWord]); // For custom-replace
+            }
+            else {
+                textElement.textContent = ` ${textElement.textContent} `;
+                var decryptedBadWord = decrypt(encryptedBadWord);
+                decryptedBadWord = " " + decryptedBadWord + " ";
+                // So we can read variables as strings
+                var sRegExpInput = new RegExp(decryptedBadWord, "gi");
+                textElement.textContent = textElement.textContent.replace(sRegExpInput, " ████ ");
+        //      textElement.textContent = textElement.textContent.replace(sRegExpInput, ` ${badWords[encryptedBadWord]} `); // For custom-replace
+            }
         }
         // For YouTube subtitles
         else {
@@ -115,15 +121,13 @@ function replaceText(textElement) {
                 textElement.parentElement.className === "ytp-caption-segment") {
                     // replace the no break space with a normal space for detection purposes
                     textElement.textContent = textElement.textContent.replace(/ /gi, " ");
-                    textElement.textContent = textElement.textContent.replace(/\[ __ \]/gi, " ████ ");
+                    textElement.textContent = textElement.textContent.replace(/\[ __ \]/gi, "████");
                 }
             }
             catch(Exception) {} // pass
         }
 
     }
-    // Get rid of added spaces.
-    textElement.textContent = textElement.textContent.slice(1, textElement.textContent.length - 1);
 }
 
 function decrypt(word) {
