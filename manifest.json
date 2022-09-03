@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "Censor Bad Language",
-    "description": "Censor all bad language written on any webpage and mutes similar words on YouTube videos.",
-    "version": "0.2.0",
+    "name": "Censor bad words: video streaming",
+    "description": "Censor all bad language for Netflix while muting the video, as well as for any other webpage.",
+    "version": "0.1.0",
     
     "content_scripts": [
         {
@@ -11,8 +11,16 @@
           "js": ["script.js"]
         },
         {
-          "matches": ["https://www.youtube.com/watch?v=*"],
-          "js": ["script.js", "monitorYtTranscript.js"]
+          "matches": ["https://www.netflix.com/*"],
+          "js": ["script.js", "monitorNetflix.js"]
         }
-    ]
+    ], 
+    "browser_action": {
+      "default_icon" : "Cursing-Extension-Icon.png",
+      "default_popup": "popup/index.html",
+      "default_title": "Blocker"
+    },
+    "icons": {
+    "128": "Cursing-Extension-Icon.png"
+    }
 }
