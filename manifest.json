@@ -1,26 +1,29 @@
 {
-    "manifest_version": 2,
-    "name": "Censor bad words: video streaming",
-    "description": "Censor all bad language for Netflix while muting the video, as well as for any other webpage.",
-    "version": "0.1.0",
-    
-    "content_scripts": [
-        {
-          "matches": ["<all_urls>"],
-          "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
-          "js": ["script.js"]
-        },
-        {
-          "matches": ["https://www.netflix.com/*"],
-          "js": ["script.js", "monitorNetflix.js"]
-        }
-    ], 
-    "browser_action": {
-      "default_icon" : "Cursing-Extension-Icon.png",
-      "default_popup": "popup/index.html",
-      "default_title": "Blocker"
+  "manifest_version": 2,
+  "name": "Censor Bad Words - Video Streaming",
+  "permissions": [
+    "tabs"
+  ],
+  "description": "Censor all bad language for Netflix while muting the video, as well as for any other webpage.",
+  "version": "0.1.0",
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
+      "js": ["script.js"]
     },
-    "icons": {
-    "128": "Cursing-Extension-Icon.png"
+    {
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["script.js", "monitorNetflix.js"]
     }
+  ], 
+  "browser_action": {
+    "default_icon" : "Cursing-Extension-Icon.png",
+    "default_popup": "popup/index.html",
+    "default_title": "Extension Settings"
+  },
+  "icons": {
+    "128": "Cursing-Extension-Icon.png"
+  }
 }

@@ -4,9 +4,11 @@
 
 // let foundEnglish = false;
 
+chrome.runtime.onMessage.addListener()
+
 // Step 1: Wait for the video to load to toggle the subtitles.
 const setup = () => {
-  console.log("initializing...");
+  // console.log("initializing...");
   const loadedStyleTags = document.getElementsByTagName("style");
   let loaded = false;
   for (let i = 0; i < loadedStyleTags.length; i++) {
@@ -15,19 +17,19 @@ const setup = () => {
     }
   }
   if (loaded) {
-    console.log("Already configured!");
+    // console.log("Already configured!");
     setTimeout(() => {
       configureSubtitleMO();
     }, 3000);
   } else {
-    console.log("No config, setting up...");
+    // console.log("No config, setting up...");
     const headMO = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.addedNodes.length > 0) {
           // Find the specific style tag that loads when the video starts.
-          console.log(mutation.addedNodes[0]);
+          // console.log(mutation.addedNodes[0]);
           if (mutation.addedNodes[0].getAttribute("data-emotion") !== null) {
-            console.log("Video loaded");
+            // console.log("Video loaded");
             headMO.disconnect();
             turnOnEnglishSubtitles();
           }     
@@ -48,7 +50,7 @@ if (location.href.includes("/watch/"))
 let lastUrl = location.href; 
 new MutationObserver(() => {
   const url = location.href;
-  console.log("loopin..");
+  // console.log("loopin..");
   if (url !== lastUrl) {
     lastUrl = url;
     if (url.includes("/watch/"))
@@ -82,7 +84,7 @@ const turnOnEnglishSubtitles = () => {
 
 const configureSubtitleMO = () => {
   const subtitleContainer = document.getElementsByClassName("player-timedtext")[0];
-  console.log(subtitleContainer);
+  // console.log(subtitleContainer);
   const video = document.getElementsByTagName("video")[0];
   // Set up Mutation Observer for subtitles
   new MutationObserver((mutations) => {
