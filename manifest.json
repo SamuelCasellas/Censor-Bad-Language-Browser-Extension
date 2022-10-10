@@ -1,26 +1,38 @@
 {
-  "manifest_version": 2,
-  "name": "Censor Bad Words - Video Streaming",
+  "manifest_version": 3,
+  "name": "Purified Streaming",
+  "description": "Censor all bad language for Netflix while muting the video, as well as all text on any other webpage.",
+  "version": "0.3.0",
   "permissions": [
-    "tabs"
+    "storage"
   ],
-  "description": "Censor all bad language for Netflix while muting the video, as well as for any other webpage.",
-  "version": "0.1.0",
-  
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "exclude_matches": ["https://www.churchofjesuschrist.org/*"],
+      "exclude_matches": ["https://*.churchofjesuschrist.org/*"],
       "js": ["script.js"]
     },
     {
       "matches": ["https://www.netflix.com/*"],
       "js": ["script.js", "monitorNetflix.js"]
+    },
+    {
+      "matches": ["https://www.youtube.com/watch?v=*"],
+      "js": ["script.js", "monitorYt.js"]
+    },
+    {
+      "matches": ["https://extensionpay.com/*"],
+      "js": ["ExtPay.js"],
+      "run_at": "document_start"
     }
   ], 
-  "browser_action": {
-    "default_icon" : "Cursing-Extension-Icon.png",
-    "default_title": "Extension Settings"
+  "action": {
+    "default_icon": "Cursing-Extension-Icon.png",
+    "default_title": "Filter Settings",
+    "default_popup": "popup/index.html"
   },
   "icons": {
     "128": "Cursing-Extension-Icon.png"
