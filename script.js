@@ -199,8 +199,14 @@ const script = (function () {
   }).observe(document.body, {subtree: true, childList: true});
 });
 
-chrome.storage.sync.get(["authenticated"], function(result) {
-  if (result.authenticated) {
+// chrome.runtime.onMessage.addListener(
+//   function(request, sender, sendResponse) {
+//     alert(request.message);
+//   }
+// );
+
+chrome.storage.sync.get(["foobaz"], function(result) {
+  if (result.foobaz) {
     script();
   }
 });

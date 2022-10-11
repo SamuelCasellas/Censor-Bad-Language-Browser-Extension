@@ -5,34 +5,34 @@ extpay.startBackground();
 
 const millisecondsInOneDay = 86400000;
 
-const authenticateUser = () => {
-  chrome.storage.sync.set({authenticated: true});
+const bo = () => {
+  chrome.storage.sync.set({foobaz: true});
 };
 
 extpay.getUser().then(user => {
   if (user.paid) {
-    authenticateUser();
+    bo();
   } else {
     if (!user.trialStartedAt) {
-      extpay.openTrialPage("7-day (IMPORTANT: Updating censoring capabilities may take a minute. Please be sure to refresh any pages already open.)");
+      extpay.openTrialPage("7-day (IMPORTANT: After starting trial, please be sure to refresh the extension on the extensions page in your browser.)");
     }
     else if (new Date().getTime() - user.trialStartedAt.getTime() > millisecondsInOneDay * 7) {
-      chrome.storage.sync.set({authenticated: false});
+      chrome.storage.sync.set({foobaz: false});
       extpay.openPaymentPage().catch((rej) => {
       });
     } else {
-      authenticateUser();
+      bo();
     }
   }
 }).catch((rej) => {
 }); 
 
 extpay.onPaid.addListener(user => {
-  authenticateUser();
+  bo();
 });
 
 extpay.onTrialStarted.addListener(user => {
-  authenticateUser();
+  bo();
 });
 
 chrome.storage.sync.get(["setup"], function(result) {
