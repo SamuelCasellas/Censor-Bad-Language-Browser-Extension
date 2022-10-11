@@ -6,9 +6,6 @@
   "permissions": [
     "storage"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -22,11 +19,6 @@
     {
       "matches": ["https://www.youtube.com/watch?v=*"],
       "js": ["script.js", "monitorYt.js"]
-    },
-    {
-      "matches": ["https://extensionpay.com/*"],
-      "js": ["ExtPay.js"],
-      "run_at": "document_start"
     }
   ], 
   "action": {
