@@ -80,7 +80,8 @@ const sexual = {
   "intvan": "",
   "obbof": "",
   "wnpx bss": "",
-  "oybj wbo": ""
+  "oybj wbo": "",
+  "onyys": ""
 };
 
 
@@ -148,20 +149,14 @@ const replaceText = (textElement) => {
         wordMemoization[encryptedBadWord] = decrypt(encryptedBadWord);
       }
       let decryptedBadWord = wordMemoization[encryptedBadWord];
+      let regExpWord;
       // First case: truncated word search; aka not "soft" search
       if (!badWords[encryptedBadWord]) {
-        let regExpWord = RegExp(decryptedBadWord, "gi");
+        regExpWord = RegExp(decryptedBadWord, "gi");
         textElement.textContent = textElement.textContent.replace(regExpWord, "████");
       } else {
-        textElement.textContent = ` ${textElement.textContent} `;
-        decryptedBadWord = ` ${decryptedBadWord} `;
-        let possibilityList = addPunct(decryptedBadWord);
-        possibilityList.forEach((checkWordInstance) => {
-          let regExpWord = RegExp(checkWordInstance, "gi");
-          textElement.textContent = textElement.textContent.replace(regExpWord, ` ████${checkWordInstance[checkWordInstance.length-1]}`);
-        });
-        // Get rid of added spaces.
-        textElement.textContent = textElement.textContent.slice(1, textElement.textContent.length - 1);
+        regExpWord =  RegExp(`(\\s|[^a-zA-Z]|^)${decryptedBadWord}(\\s|[^a-zA-Z]|$\)`, "gi")
+        textElement.textContent = textElement.textContent.replace(regExpWord, " ████ ");
       }
     }
   }
@@ -176,17 +171,17 @@ const decrypt = (word) => {
   return newWord;
 }
 
-const punctuation = ['!', '\\?', '\\.', ',', ':', ';', '—', '\'', '\"'];
-const addPunct = (word) => {
-  /* Assumes that the word already has a space before and after added to it.
-  */
-  let possibilityList = [word];
-  let truncateWord = word.slice(0, word.length - 1);
-  for (let punct of punctuation) {
-    possibilityList.push(truncateWord + punct);
-  }
-  return possibilityList;
-}
+// const punctuation = ['!', '\\?', '\\.', ',', ':', ';', '—', '\'', '\"'];
+// const addPunct = (word) => {
+//   /* Assumes that the word already has a space before and after added to it.
+//   */
+//   let possibilityList = [word];
+//   let truncateWord = word.slice(0, word.length - 1);
+//   for (let punct of punctuation) {
+//     possibilityList.push(truncateWord + punct);
+//   }
+//   return possibilityList;
+// }
 
 // Parse all text on initial load
 findText(document.body);
