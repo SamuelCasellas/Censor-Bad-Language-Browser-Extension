@@ -129,7 +129,6 @@ const adMOSetUp = () => {
             firstAdShown = true;
             adShowing = false;
             setUpSubtitles();
-            // adMO.disconnect();
           }
           else if (adContainerClassList.contains("ad-playing")
           || adContainerClassList.contains("ad-showing")) {
@@ -173,11 +172,12 @@ const captionOperationSteps = [
     // Not all videos have the same number of menu items when settings is selected.
     // Survey each one.
     let menuItems = settings.childNodes[0].childNodes[0].childNodes;
+    // Find subtitles option and click it.
     menuItems.forEach((menuItem) => {
       let itemLabelText = menuItem.childNodes.item(1).textContent;
       if (itemLabelText != "Annotations" && itemLabelText != "Playback speed" && itemLabelText != "Quality") 
-        // Found subtitles option
         menuItem.click();
+        // What is this for?
         // wait until the screen has updated with the available subtitles: wait time 0.7 seconds
     });
   },
@@ -185,52 +185,51 @@ const captionOperationSteps = [
   // Step 3: Wait until the screen has updated with the available subtitles before selecting
   function() {
     if (adShowing) return;
-    let captionsAvailable = document.getElementsByClassName("ytp-panel-menu")[0].childNodes;
-    let englishAlt;
+    const captionsAvailable = document.getElementsByClassName("ytp-panel-menu")[0].childNodes;
+
+    // See if the video has English captions provided by creator. 
+    // These are preferred.
+    captionsAvailable.forEach((caption) => {
+      if (caption.firstChild.innerText.includes("English") && 
+      !caption.firstChild.innerText.includes("(auto-generated)")) {
+        caption.click();
+        hasEnglishCaptions = true;
+        sentenceCaptions = true;
+        settingsButton.click();
+        let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
+        if (!showYtSubtitles) currentCaptionWindow.style = "display: none !important;";
+      }
+    });
+    if (sentenceCaptions) return;
+    // If not, see if the video has English captions provided by YouTube.
     captionsAvailable.forEach((caption) => {
       if (caption.firstChild.innerText.includes("English (auto-generated)")) {
-        // Select auto generated
         caption.click();
         hasEnglishCaptions = true;
         settingsButton.click();
         let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-        if (!showYtSubtitles)
-          currentCaptionWindow.style = "display: none !important;";
-      }
-      else if (caption.firstChild.innerText.includes("English")) {
-        englishAlt = caption;
+        if (!showYtSubtitles) currentCaptionWindow.style = "display: none !important;";
       }
     });
-    if (!hasEnglishCaptions && englishAlt) {
-      sentenceCaptions = true;
-      englishAlt.click();
-      hasEnglishCaptions = true;
-      settingsButton.click();
-      let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-      if (!showYtSubtitles)
-        currentCaptionWindow.style = "display: none !important;";
-    }
   },
   function () {
-    if (adShowing) return;
-    if (!hasEnglishCaptions)
-      alert("Censoring unavailable for this video.");
-    else {
-      // Step 3: Begin observing the caption screen for mutations (added text nodes).
-      // Must be a specific snapshot of the caption screen (not its constant static reference).
-      let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-      try {
-        if (!showYtSubtitles && !timingCensorOn)
-          currentCaptionWindow.style = "display: none !important;";
-      } catch (error) {}
-      // Use this function to clear amy subtitles that may have already been said to start afresh.
-      clearAllChildren(currentCaptionWindow);
-      
-      // Begin observing
-      try {
-        captionPresenceObserver.observe(currentCaptionWindow, {childList: true});
-      } catch (e) {}
-    }
+    if (!hasEnglishCaptions && !adShowing) alert("Censoring unavailable for this video.");
+    if (adShowing || !hasEnglishCaptions) return;
+    
+    // Step 3: Begin observing the caption screen for mutations (added text nodes).
+    // Must be a specific snapshot of the caption screen (not its constant static reference).
+    let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
+    try {
+      if (!showYtSubtitles && !timingCensorOn)
+        currentCaptionWindow.style = "display: none !important;";
+    } catch (e) {}
+    // Use this function to clear any subtitles that may have already been said to start afresh.
+    clearAllChildren(currentCaptionWindow);
+    
+    // Begin observing
+    try {
+      captionPresenceObserver.observe(currentCaptionWindow, {childList: true});
+    } catch (e) {}
   }
 ];
 
@@ -307,7 +306,11 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
     }
     return;
   }
-  if (mutations[0].addedNodes.length === 0) return;
+
+  // Auto-generated captions ///////////////
+  // The caption window has no captions-text (nodes length is 0)
+  if (!mutations[0].addedNodes.length) return;
+  
   // The caption window has captions-text again (nodes length is 1)
   let captionsText = mutations[0].addedNodes[0].childNodes[0]
 
