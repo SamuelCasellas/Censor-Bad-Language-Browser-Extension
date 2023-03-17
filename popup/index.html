@@ -32,6 +32,7 @@
       margin-left: 15px;
     }
   </style>
+  <script src="popupSettings.js" type="module" defer></script>
 </head>
 
 <body>
@@ -60,12 +61,17 @@
   </div>
   <br>
   <div class="checkbox">
+    <h2>Show subtitles on YouTube</h2>
+    <input type="checkbox" id="yt-sub" aria-checked="false"/>
+  </div>
+  <div class="checkbox">
     <h2>Show subtitles on Netflix</h2>
     <input type="checkbox" id="netflix-sub" aria-checked="false"/>
   </div>
+  <br>
   <div class="checkbox">
-    <h2>Show subtitles on YouTube</h2>
-    <input type="checkbox" id="yt-sub" aria-checked="false"/>
+    <h2>Mute on Netflix (Turn off for forign shows)</h2>
+    <input type="checkbox" id="netflix-mute" aria-checked="false"/>
   </div>
   <h2>Timed Censor (not recommended)</h2>
   <div class="checkbox">
@@ -78,6 +84,5 @@
       LinkedIn
     </a>
   </span>
-  <script src="popupSettings.js" type="text/javascript"></script>
 </body>
 </html>

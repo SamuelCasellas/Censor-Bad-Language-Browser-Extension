@@ -1,4 +1,3 @@
-
 'use strict';
 
 const decryptionKey = {
@@ -44,8 +43,9 @@ let badWords = {
   "phag": "",
   "chffl": "",
 
+  "snttbg": "", // Rider
+  "snt": "", // Short Rider
   "onfgneq": "", // MM
-  "avttn": "", // Small-racist
   "[ __ ]": "[ __ ]", // This is for YouTube    
 };
 
@@ -57,7 +57,9 @@ const semiBaddies = {
   "qnza": "",
   "qnzzvg": "",
   "uryy": "soft",
-  "cvff":""
+  "cvff":"",
+  "qbhpur":"",
+  "onyyf":""
 };
 
 const religious = {
@@ -70,7 +72,7 @@ const religious = {
 
 const racialSlurs = {
   "avttre": "", // Racist
-  "snttbg": "", // Rider
+  "avttn": "", // Small-racist
 };
 
 const sexual = {
@@ -80,45 +82,29 @@ const sexual = {
   "intvan": "",
   "obbof": "",
   "wnpx bss": "",
+  "wrex bss": "",
   "oybj wbo": "",
-  "onyys": ""
+  "onyyf": "",
+  "ubeal": "",
+  "betl": "",
+  "gjng": ""
 };
 
+const filterNameToWords = {
+  "allCurses": semiBaddies,
+  "religious": religious,
+  "racial": racialSlurs,
+  "sexual": sexual
+};
 
 // Apply filters
-chrome.storage.sync.get(["allCurses"], function(result) {
-  // console.log(result);
-  if (JSON.parse(result["allCurses"])) {
-    // console.log("Added all");
-    badWords = {...badWords, ...semiBaddies};
-  }
-});
+for (let filter in filterNameToWords) {
+  getChromeAttr(filter, null).then(currentSetting => {
+    if (currentSetting) {badWords = {...badWords, ...filterNameToWords[filter]};}
+  });
+}
 
-chrome.storage.sync.get(["religious"], function(result) {
-  // console.log(result);
-  if (JSON.parse(result["religious"])) {
-    // console.log("Added all with religious");
-    badWords = {...badWords, ...religious};
-  }
-});
-
-chrome.storage.sync.get(["racial"], function(result) {
-  // console.log(result);
-  if (JSON.parse(result["racial"])) {
-    // console.log("Added all with religious");
-    badWords = {...badWords, ...racialSlurs};
-  }
-});
-
-chrome.storage.sync.get(["sexual"], function(result) {
-  // console.log(result);
-  if (JSON.parse(result["sexual"])) {
-    // console.log("Added all with religious");
-    badWords = {...badWords, ...sexual};
-  }
-});
-
-let wordMemoization = new Object;
+let wordRegExMemoization = new Object;
 
 const findText = (element) => {
   if (element.hasChildNodes()) {
@@ -140,25 +126,36 @@ const ytSpecialChar = (textElement) => {
   } catch(e) {} // pass
 }
 
+const wordCheck = (textElement, encryptedBadWord) => {
+  let regExpWord;
+
+  // IF word not memoized: create and store its RegEx search pattern
+  if (!wordRegExMemoization[encryptedBadWord]) {
+    const decryptedBadWord = decrypt(encryptedBadWord);
+    // IF word is truncated strictly (not commonly composing other words)
+    if (!badWords[encryptedBadWord]) {
+      regExpWord = RegExp(decryptedBadWord, "gi");
+    } else {
+      regExpWord = RegExp(`(\\s|[^a-zA-Z]|^)${decryptedBadWord}(\\s|[^a-zA-Z]|$\)`, "gi")
+    }
+    wordRegExMemoization[encryptedBadWord] = regExpWord;
+  }
+
+  regExpWord = wordRegExMemoization[encryptedBadWord];
+  
+  let bleep;
+  badWords[encryptedBadWord] === "soft"
+  ? bleep = " ████ "
+  : bleep = "████";
+
+  textElement.textContent = textElement.textContent.replace(regExpWord, bleep);
+};
+
 const replaceText = (textElement) => {
   for (let encryptedBadWord in badWords) {
-    if (encryptedBadWord === "[ __ ]") {
-      ytSpecialChar(textElement);
-    } else {
-      if (!wordMemoization[encryptedBadWord]) {
-        wordMemoization[encryptedBadWord] = decrypt(encryptedBadWord);
-      }
-      let decryptedBadWord = wordMemoization[encryptedBadWord];
-      let regExpWord;
-      // First case: truncated word search; aka not "soft" search
-      if (!badWords[encryptedBadWord]) {
-        regExpWord = RegExp(decryptedBadWord, "gi");
-        textElement.textContent = textElement.textContent.replace(regExpWord, "████");
-      } else {
-        regExpWord =  RegExp(`(\\s|[^a-zA-Z]|^)${decryptedBadWord}(\\s|[^a-zA-Z]|$\)`, "gi")
-        textElement.textContent = textElement.textContent.replace(regExpWord, " ████ ");
-      }
-    }
+    encryptedBadWord === "[ __ ]"
+    ? ytSpecialChar(textElement)
+    : wordCheck(textElement, encryptedBadWord);
   }
 }
 
@@ -171,24 +168,29 @@ const decrypt = (word) => {
   return newWord;
 }
 
-// const punctuation = ['!', '\\?', '\\.', ',', ':', ';', '—', '\'', '\"'];
-// const addPunct = (word) => {
-//   /* Assumes that the word already has a space before and after added to it.
-//   */
-//   let possibilityList = [word];
-//   let truncateWord = word.slice(0, word.length - 1);
-//   for (let punct of punctuation) {
-//     possibilityList.push(truncateWord + punct);
-//   }
-//   return possibilityList;
-// }
-
 // Parse all text on initial load
 findText(document.body);
 
 // newTextMO for dynamic text
 new MutationObserver((mutations) => {
+  document.querySelectorAll('[contenteditable]').forEach(createInputEventListener);
   mutations.forEach((mutation) => {
     mutation.addedNodes.forEach(findText);
   });
 }).observe(document.body, {subtree: true, childList: true});
+
+
+function createInputEventListener(el) {
+  el.addEventListener("input", function(event) {
+    const input = event.target;
+    if (input.textContent.length > 1) return;
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }, 10);
+  });
+}

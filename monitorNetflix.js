@@ -1,98 +1,4 @@
-
-
 'use strict';
-
-const vowels = ["a", "e", "i", "o", "u", "y"];
-const numSyllablesInWord = (word, ignoreEndingPunct=false) => {
-  /* 
-  
-  */
-  let consonantClustersCounter = 0;
-  let lastLetter;
-  let lastLetterIsVowel;
-
-  if (word === "") return 0;
-  if (word.startsWith("[") && word.endsWith("]")) return 0;
-  if (word === "ok") return 2;
-  if (word.includes("hhh") || word.includes("aaa")) return 5;
-
-  // if (!ignoreEndingPunct) {
-    if (word.replace(/[^a-z\s]+/g, "") !== word) {
-      if (word.endsWith("...")) {
-        consonantClustersCounter += 3;
-      }
-      else if (word.endsWith(".") || word.endsWith("?")) {
-        consonantClustersCounter += 2;
-      }
-      else if (word.endsWith("!") || word.endsWith(",") || word.endsWith("-")) {
-        consonantClustersCounter += 1;
-      }
-      word = word.replace(/[^a-z\s]+/g, "");
-    }
-  // }
-
-  const doubleVowelSplitsPossibilities = [
-    "ia",
-    "oi"
-  ];
-
-  word.split("").forEach((l, indx) => {
-    try {
-      if (indx === 0) {
-        lastLetterIsVowel = vowels.includes(l);
-        consonantClustersCounter++;
-      } else {
-        if (vowels.includes(l) !== lastLetterIsVowel) {
-          lastLetterIsVowel = vowels.includes(l);
-          if (!vowels.includes(l)) consonantClustersCounter++;
-        }
-        // Account for double vowels that split: () ia, oi (doing), // NOT: ie (friend),  
-        else if (vowels.includes(l)) {
-          if (doubleVowelSplitsPossibilities.includes(lastLetter + l)) {
-            consonantClustersCounter++;
-          }
-        }
-      }
-      lastLetter = l;
-    } catch (e) {
-    }
-  });
-
-  // Distribute syllable worth
-  if (word.endsWith("ed")) consonantClustersCounter--;
-  if (consonantClustersCounter === 0) return 1;
-  if (!lastLetterIsVowel) return consonantClustersCounter - 1;
-  else {
-    if (word[word.length - 1] === "e") {
-      if ((word[word.length - 2] in vowels) || word[word.length - 2] === "l") {
-        return consonantClustersCounter;
-      } else {
-        return consonantClustersCounter - 1 === 0 ? 1 : consonantClustersCounter - 1;
-      }
-    } else {
-      return consonantClustersCounter;
-    }
-  }
-};
-
-const timesOfTargetInSentence = (sentence, bleepSymbol) => {
-  sentence = sentence.toLowerCase().replace(/-|–|—/g, "");
-  let totalSyllables = 0;
-  let syllableTimingOfTargets = [];
-
-  sentence.split(" ").forEach((word, indx, array) => {
-    if (word.includes(bleepSymbol)) {
-      syllableTimingOfTargets.push(totalSyllables*0.16) // On average a person speaks 4 to 5 syllables a second.
-    }
-    let result = numSyllablesInWord(word);
-    totalSyllables += result;
-  });
-
-  return [syllableTimingOfTargets, totalSyllables * 0.16];
-  // syllableTimingOfTargets.forEach((pos) => {
-  //   console.log("Target word", bleepSymbol, "is said after", pos*0.2, "seconds in a sentence that is", totalSyllables*0.2);
-  // })
-};
 
 const videoButtonsClass = " ltr-14ph5iy";
 const subtitleDivsClass = "ltr-1dudwk2";
@@ -102,18 +8,21 @@ let setUpOnce = false;
 let videoClicked = false;
 
 let showNfSubtitles = false;
-chrome.storage.sync.get(["netflixSubs"], function(result) {
-  if (JSON.parse(result["netflixSubs"])) {
-    showNfSubtitles = true;
-  }
-});
-
 let timingCensorOn = false;
-chrome.storage.sync.get(["smartCensor"], function(result) {
-  if (JSON.parse(result["smartCensor"])) {
-    timingCensorOn = true;
-  }
-});
+let muteOn = true;
+
+// Async functions whose values can be grabbed later
+getChromeAttr("netflixSubs")
+  .then(val => showNfSubtitles = val)
+  .catch(err => console.error(err));
+
+getChromeAttr("smartCensor")
+  .then(val => timingCensorOn = val)
+  .catch(err => console.error(err));
+
+getChromeAttr("netflixMute")
+  .then(val => muteOn = val)
+  .catch(err => console.error(err));
 
 // Step 1: Wait for the video to load before toggling the subtitles.
 const newMovieLoading = () => {
@@ -152,6 +61,7 @@ const newMovieLoading = () => {
 
 const newURLHandler = () => {
   setTimeout(() => {
+    if (!muteOn) return;
     newMovieLoading();
   }, 1300);
 };
@@ -238,7 +148,7 @@ const unMute = (vid) => {
   mutedStack.push(true);
   unmuteTiming * subtitleOffsetFactor;
   setTimeout(() => {
-    mutedStack.pop(true);
+    mutedStack.pop();
     if (!mutedStack.length)
       vid.muted = false;
   }, unmuteTiming);
@@ -264,7 +174,6 @@ const configureSubtitleMO = () => {
 
   const currentMilliseconds = () => new Date().getTime();
 
-  let singleRegister = false;
   let currentSubtitleState = null;
   let lastSubtitleState = "SampleText";
   // Does not start observing until 2.5 second after a new video has reloaded.
@@ -286,7 +195,6 @@ const configureSubtitleMO = () => {
     if (timingCensorOn) {
       lastSubtitleState = currentSubtitleState;
 
-      singleRegister = true;
       if (startTime) {
         endTime = currentMilliseconds();
         let comparePercentage = (endTime-startTime) / projectedTimeInMilliSeconds;

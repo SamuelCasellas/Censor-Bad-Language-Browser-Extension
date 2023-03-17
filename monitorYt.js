@@ -1,19 +1,16 @@
-
-const settingsButton = document.querySelector(".ytp-settings-button");
-const video = document.querySelector("video");
+'use strict';
+let settingsButton, video;
 
 let showYtSubtitles = false;
-chrome.storage.sync.get(["ytSubs"], function(result) {
-  if (JSON.parse(result["ytSubs"])) {
-    showYtSubtitles = true;
-  }
-});
 let timingCensorOn = false;
-chrome.storage.sync.get(["smartCensor"], function(result) {
-  if (JSON.parse(result["smartCensor"])) {
-    timingCensorOn = true;
-  }
-});
+
+getChromeAttr("ytSubs")
+  .then(val => showYtSubtitles = val)
+  .catch(err => console.error(err));
+
+getChromeAttr("smartCensor")
+  .then(val => timingCensorOn = val)
+  .catch(err => console.error(err));
 
 const clearAllChildren = (parent) => {
   try {
@@ -22,101 +19,13 @@ const clearAllChildren = (parent) => {
   } catch (e) {}
 };
 
-const vowels = ["a", "e", "i", "o", "u", "y"];
-
-const numSyllablesInWord = (word, ignoreEndingPunct=false) => {
-  /* 
-  
-  */
-  let consonantClustersCounter = 0;
-  let lastLetter;
-  let lastLetterIsVowel;
-
-  if (word === "") return 0;
-  if (word === "ok") return 2;
-  if (word.includes("hhh") || word.includes("aaa")) return 5;
-
-  // if (!ignoreEndingPunct) {
-    if (word.replace(/[^a-z\s]+/g, "") !== word) {
-      if (word.endsWith("...")) {
-        consonantClustersCounter += 3;
-      }
-      else if (word.endsWith(".") || word.endsWith("?")) {
-        consonantClustersCounter += 2;
-      }
-      else if (word.endsWith("!") || word.endsWith(",") || word.endsWith("-")) {
-        consonantClustersCounter += 1;
-      }
-      word = word.replace(/[^a-z\s]+/g, "");
-    }
-  // }
-
-  const doubleVowelSplitsPossibilities = [
-    "ia",
-    "oi"
-  ];
-
-  word.split("").forEach((l, indx) => {
-    try {
-      if (indx === 0) {
-        lastLetterIsVowel = vowels.includes(l);
-        consonantClustersCounter++;
-      } else {
-        if (vowels.includes(l) !== lastLetterIsVowel) {
-          lastLetterIsVowel = vowels.includes(l);
-          if (!vowels.includes(l)) consonantClustersCounter++;
-        }
-        // Account for double vowels that split: () ia, oi (doing), // NOT: ie (friend),  
-        else if (vowels.includes(l)) {
-          if (doubleVowelSplitsPossibilities.includes(lastLetter + l)) {
-            consonantClustersCounter++;
-          }
-        }
-      }
-      lastLetter = l;
-    } catch (e) {
-    }
-  });
-
-  // Distribute syllable worth
-  if (word.endsWith("ed")) consonantClustersCounter--;
-  if (consonantClustersCounter === 0) return 1;
-  if (!lastLetterIsVowel) return consonantClustersCounter - 1;
-  else {
-    if (word[word.length - 1] === "e") {
-      if ((word[word.length - 2] in vowels) || word[word.length - 2] === "l") {
-        return consonantClustersCounter;
-      } else {
-        return consonantClustersCounter - 1 === 0 ? 1 : consonantClustersCounter - 1;
-      }
-    } else {
-      return consonantClustersCounter;
-    }
-  }
-};
-
-const timesOfTargetInSentence = (sentence, bleepSymbol) => {
-  sentence = sentence.toLowerCase().replace(/-|–|—/g, "");
-  let totalSyllables = 0;
-  let syllableTimingOfTargets = [];
-
-  sentence.split(" ").forEach((word, indx, array) => {
-    if (word.includes(bleepSymbol)) {
-      syllableTimingOfTargets.push(totalSyllables*0.16) // On average a person speaks 4 to 5 syllables a second.
-    }
-    let result = numSyllablesInWord(word);
-    totalSyllables += result;
-  });
-
-  return [syllableTimingOfTargets, totalSyllables * 0.16];
-};
-
 let hasEnglishCaptions = false;
 let sentenceCaptions = false;
 let adShowing = false;
 let firstAdShown = false;
 let singleThreshold = false;
 
+// Entry-point
 const adMOSetUp = () => {
   try {
     new MutationObserver((mutations) => {
@@ -140,9 +49,12 @@ const adMOSetUp = () => {
   } catch (e) {}
 };
 
-setTimeout(() => {
-  adMOSetUp()
-}, 0);
+// First load
+if (location.href.includes("youtube.com/watch?")) {
+  settingsButton = document.querySelector(".ytp-settings-button");
+  video = document.querySelector("video");
+  adMOSetUp();
+}
 
 const captionOperationSteps = [
   // Step 1: Click the settings button to access its menu options.
@@ -158,6 +70,7 @@ const captionOperationSteps = [
           settings.setAttribute("style", "display: none;");
         }
       } catch (e) {
+        console.log(e);
         settingsButton.click();
         let settings = document.body.getElementsByClassName("ytp-settings-menu")[0];
         settings.setAttribute("style", "display: none;");
@@ -197,7 +110,8 @@ const captionOperationSteps = [
         sentenceCaptions = true;
         settingsButton.click();
         let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-        if (!showYtSubtitles) currentCaptionWindow.style = "display: none !important;";
+        if (!showYtSubtitles && currentCaptionWindow) 
+          currentCaptionWindow.style = "display: none !important;";
       }
     });
     if (sentenceCaptions) return;
@@ -212,7 +126,8 @@ const captionOperationSteps = [
       }
     });
   },
-  function () {
+  // Step 4: Begin observing captions
+  function() {
     if (!hasEnglishCaptions && !adShowing) alert("Censoring unavailable for this video.");
     if (adShowing || !hasEnglishCaptions) return;
     
@@ -220,7 +135,7 @@ const captionOperationSteps = [
     // Must be a specific snapshot of the caption screen (not its constant static reference).
     let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
     try {
-      if (!showYtSubtitles && !timingCensorOn)
+      if (!(showYtSubtitles || timingCensorOn))
         currentCaptionWindow.style = "display: none !important;";
     } catch (e) {}
     // Use this function to clear any subtitles that may have already been said to start afresh.
@@ -233,7 +148,7 @@ const captionOperationSteps = [
   }
 ];
 
-const setUpSubtitles = () => {
+function setUpSubtitles() {
   // carry out timely executions
   for (let i = 0; i < captionOperationSteps.length; i++) {
     setTimeout(captionOperationSteps[i], (i) * 600);
@@ -247,6 +162,8 @@ new MutationObserver(() => {
   if (currentURL === location.href) return;
   currentURL = location.href;
   if (location.href.includes("youtube.com/watch")) {
+    settingsButton = document.querySelector(".ytp-settings-button");
+    video = document.querySelector("video");
     hasEnglishCaptions = adShowing = firstAdShown = singleThreshold = sentenceCaptions = false;
     adMOSetUp();
   }
@@ -278,7 +195,9 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
         if (startTime) {
           let comparePercentage = (endTime-startTime) / projectedTimeInMilliSeconds;
           // If paused or exaggerated
-          comparePercentage > 3.5 ? subtitleOffsetFactor = 1 : subtitleOffsetFactor = (subtitleOffsetFactor * 5 + comparePercentage) / 6;
+          (comparePercentage > 3.5)
+          ? subtitleOffsetFactor = 1 
+          : subtitleOffsetFactor = (subtitleOffsetFactor * 5 + comparePercentage) / 6;
           // // console.log("This percentage", comparePercentage, "Average", subtitleOffsetFactor);
         }
       }
@@ -290,24 +209,26 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
       
       // // console.log(currentFixedText) // useful! (fixedSubtitles)
       projectedTimeInMilliSeconds = timingCensor(currentFixedText, video);
-    } else {
-      if (currentFixedText.length) {
-        if (currentFixedText.includes("████")) {
-          video.muted = true;
-          mutations[0].target.style = "display: block !important;"
-        } else {
-          video.muted = false;
-          if (!showYtSubtitles) mutations[0].target.style = "display: none !important;";
-        } 
+      return;
+    }  // return;
+
+    // ELSE: Mute whole sentenceCaptions //
+    if (currentFixedText.length) {
+      if (currentFixedText.includes("████")) {
+        video.muted = true;
+        mutations[0].target.style = "display: block !important;"
       } else {
         video.muted = false;
-        if (!showYtSubtitles) mutations[0].target.style = "display: none !important;"
-      }
+        if (!showYtSubtitles) mutations[0].target.style = "display: none !important;";
+      } 
+    } else {
+      video.muted = false;
+      if (!showYtSubtitles) mutations[0].target.style = "display: none !important;"
     }
     return;
-  }
+  } // return;
 
-  // Auto-generated captions ///////////////
+  // ELSE: Auto-generated captions //
   // The caption window has no captions-text (nodes length is 0)
   if (!mutations[0].addedNodes.length) return;
   
@@ -369,17 +290,17 @@ const individualLineCaptionObserver = new MutationObserver((mutations) => {
 });
 
 const timingCensor = (sentence, vid) => {
-  if (timingCensorOn) {
-    let [timings, projectedTimeInSeconds] = timesOfTargetInSentence(sentence, "████");
-    timings.forEach((time) => {
-      // console.log(time * subtitleOffsetFactor);
-      setTimeout(() => {
-        vid.muted = true;
-        unMute(vid, false, true)
-      }, time * 1000 * subtitleOffsetFactor);
-    });
-    return projectedTimeInSeconds * 1000; // Return to report the projected time of the sentence
-  }
+  // timesOfTargetInSentence: available in the global setting 
+  // defined in manifest file!
+  let [timings, projectedTimeInSeconds] = timesOfTargetInSentence(sentence, "████");
+  timings.forEach((time) => {
+    // console.log(time * subtitleOffsetFactor);
+    setTimeout(() => {
+      vid.muted = true;
+      unMute(vid, false, true)
+    }, time * 1000 * subtitleOffsetFactor);
+  });
+  return projectedTimeInSeconds * 1000; // Return to report the projected time of the sentence
 };
 
 
