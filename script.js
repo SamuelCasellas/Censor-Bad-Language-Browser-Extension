@@ -64,10 +64,9 @@ const semiBaddies = {
 
 const religious = {
   "tbqqnza": "",
-  "tbq": "",
+  "zl tbq": "",
   "wrfhf": "",
   "puevfg": "soft",
-  "ybeq": "",
 };
 
 const racialSlurs = {
