@@ -29,6 +29,7 @@
       "matches": ["https://www.youtube.com/*"],
       "js": [
         "chromeStorageFunctions.js", 
+        "queue.js",
         "syllablesParsing.js", 
         "script.js", 
         "monitorYt.js" 

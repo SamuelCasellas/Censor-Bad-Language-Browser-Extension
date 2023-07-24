@@ -305,9 +305,12 @@ const timingCensor = (sentence, vid) => {
 
 
 let mutedTime;
+// for censoring "Oh my _____" in word-by-word captions
+let wordQueue = new Queue;
 // Mute by time first, then if the next word has not been said yet, wait until that word
 const censorWord = (textNode, vid, extraTime=false) => {
-  if (textNode.includes("████")) {
+  wordQueue.enqueue(textNode.trim());
+  if (textNode.includes("████") || wordQueue.hasInOrder("oh", "my")) {
     vid.muted = true;
     mutedTime = currentMilliseconds();
   } else {
