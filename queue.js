@@ -1,7 +1,7 @@
 class Queue {
-  constructor() {
+  constructor(maxSize) {
     this.queue = [];
-    this.maxSize = 3;
+    this.maxSize = maxSize;
   }
 
   enqueue(item) {
@@ -38,10 +38,10 @@ class Queue {
   hasInOrder(...args) {
     let nowCountingSequentially = false;
     for (let item of this.queue) {
-      if (args[0] === item) {
+      if (item.match(args[0])) {
         nowCountingSequentially = true;
       }
-      if (nowCountingSequentially && item === args[0]) {
+      if (nowCountingSequentially && item.match(args[0])) {
         args.shift();
         if (!args.length) return true;
       }

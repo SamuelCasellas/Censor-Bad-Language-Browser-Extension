@@ -1,5 +1,6 @@
 'use strict';
 let settingsButton, video;
+const censorBlock = "████";
 
 let showYtSubtitles = false;
 let timingCensorOn = false;
@@ -27,7 +28,7 @@ let singleThreshold = false;
 
 // Entry-point
 const adMOSetUp = () => {
-  try {
+  // try {
     new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           let adContainerClassList = mutation.target.classList;
@@ -46,7 +47,7 @@ const adMOSetUp = () => {
           }
       });
     }).observe(document.querySelector(".html5-video-player"), {attributes: true});
-  } catch (e) {}
+  // } catch (e) {}
 };
 
 // First load
@@ -142,9 +143,9 @@ const captionOperationSteps = [
     clearAllChildren(currentCaptionWindow);
     
     // Begin observing
-    try {
+    // try {
       captionPresenceObserver.observe(currentCaptionWindow, {childList: true});
-    } catch (e) {}
+    // } catch (e) {}
   }
 ];
 
@@ -214,7 +215,7 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
 
     // ELSE: Mute whole sentenceCaptions //
     if (currentFixedText.length) {
-      if (currentFixedText.includes("████")) {
+      if (currentFixedText.includes(censorBlock)) {
         video.muted = true;
         mutations[0].target.style = "display: block !important;"
       } else {
@@ -247,9 +248,9 @@ const captionPresenceObserver = new MutationObserver((mutations) => {
   observeNewCaptionVisualLine(captionVisualLine);
   
   // watch for any added captionVisualLines
-  try {
+  // try {
     newCaptionLineObserver.observe(captionsText, {childList: true});
-  } catch (e) {}
+  // } catch (e) {}
 });
 
 const newCaptionLineObserver = new MutationObserver((mutations) => {
@@ -274,25 +275,27 @@ const newCaptionLineObserver = new MutationObserver((mutations) => {
       */
       // visualLine elements only will ever have one child: ytp-caption-segment
       let captionSegment = visualLine.firstChild; 
-      try {
+      // try {
         individualLineCaptionObserver.observe(captionSegment, {
           childList: true, // Observe for individual word insertions
           subtree: true
         });
-      } catch (e) {}
+      // } catch (e) {}
     };
 
 const individualLineCaptionObserver = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
     // console.log(node.textContent); // useful!
-    censorWord(node.textContent, video)}
-  ));
+    if (censorWord(node.textContent, video) === true) {
+      node.textContent = node.textContent.replace("god", censorBlock);
+    }
+  }));
 });
 
 const timingCensor = (sentence, vid) => {
   // timesOfTargetInSentence: available in the global setting 
   // defined in manifest file!
-  let [timings, projectedTimeInSeconds] = timesOfTargetInSentence(sentence, "████");
+  let [timings, projectedTimeInSeconds] = timesOfTargetInSentence(sentence, censorBlock);
   timings.forEach((time) => {
     // console.log(time * subtitleOffsetFactor);
     setTimeout(() => {
@@ -306,13 +309,18 @@ const timingCensor = (sentence, vid) => {
 
 let mutedTime;
 // for censoring "Oh my _____" in word-by-word captions
-let wordQueue = new Queue;
+let wordQueue = new Queue(2);
 // Mute by time first, then if the next word has not been said yet, wait until that word
 const censorWord = (textNode, vid, extraTime=false) => {
-  wordQueue.enqueue(textNode.trim());
-  if (textNode.includes("████") || wordQueue.hasInOrder("oh", "my")) {
+  wordQueue.enqueue(textNode.trim()/*.toLowerCase()*/);
+  if (textNode.includes(censorBlock)) {
     vid.muted = true;
     mutedTime = currentMilliseconds();
+  } 
+  else if (wordQueue.hasInOrder(/oh|my/gi, "god")) {
+    vid.muted = true;
+    mutedTime = currentMilliseconds();
+    return true;
   } else {
     currentMilliseconds() - mutedTime < 650
     ? setTimeout(() => vid.muted = false, 650 - (currentMilliseconds() - mutedTime))
