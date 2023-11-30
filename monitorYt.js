@@ -95,7 +95,6 @@ const captionOperationSteps = [
         // wait until the screen has updated with the available subtitles: wait time 0.7 seconds
     });
   },
-  
   // Step 3: Wait until the screen has updated with the available subtitles before selecting
   function() {
     if (adShowing) return;
@@ -162,13 +161,14 @@ let currentURL = location.href;
 new MutationObserver(() => {
   if (currentURL === location.href) return;
   currentURL = location.href;
+  console.log("New url!");
   if (location.href.includes("youtube.com/watch")) {
     settingsButton = document.querySelector(".ytp-settings-button");
     video = document.querySelector("video");
     hasEnglishCaptions = adShowing = firstAdShown = singleThreshold = sentenceCaptions = false;
     adMOSetUp();
   }
-}).observe(document, {childList: true, subtree: true});
+}).observe(document.head, {childList: true, subtree: true});
 
 ////// OBSERVATIONS ///////
 
@@ -312,7 +312,8 @@ let mutedTime;
 let wordQueue = new Queue(2);
 // Mute by time first, then if the next word has not been said yet, wait until that word
 const censorWord = (textNode, vid, extraTime=false) => {
-  wordQueue.enqueue(textNode.trim()/*.toLowerCase()*/);
+  console.log(wordQueue);
+  wordQueue.enqueue(textNode.trim().toLowerCase());
   if (textNode.includes(censorBlock)) {
     vid.muted = true;
     mutedTime = currentMilliseconds();
