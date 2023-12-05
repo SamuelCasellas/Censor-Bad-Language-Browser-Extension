@@ -28,7 +28,14 @@ const decryptionKey = {
   "y":"l",
   "z":"m",
   " ":" ",
+  ",":",",
+  "?":"?"
 };
+
+const youtubeRegex = '\\[\u00A0__\u00A0\\]';
+
+const bleep = '████';
+const softBleep = ' ████ ';
 
 let badWords = {
   // The baddies //
@@ -38,7 +45,7 @@ let badWords = {
   "ohyyfuvg": "",
   "fuvg": "",
 
-  "pbpx": "soft",
+  "pbpx": "soft", // "Don't get too cocky"
   "qvpx": "",
   "phag": "",
   "chffl": "",
@@ -46,32 +53,33 @@ let badWords = {
   "snttbg": "", // Rider
   "snt": "", // Short Rider
   "onfgneq": "", // MM
-  "[ __ ]": "[ __ ]", // This is for YouTube    
 };
 
 const semiBaddies = {
-  "nff": "soft",
+  "nffr?f?": "soft", // bum
   "nffubyr": "",
   "qhzonff": "",
   "wnpxnff": "",
   "qnza": "",
   "qnzzvg": "",
   "uryy": "soft",
-  "cvff":"",
-  "qbhpur":"",
-  "onyyf":""
+  "cvff": "",
+  "qbhpur": "",
+  "onyyf": "",
 };
 
 const religious = {
-  "tbqqnza": "",
+  "tbq ?qnza": "",
   "zl tbq": "",
+  "bu,? tbq": "",
+  "tbq,": "",
   "wrfhf": "",
   "puevfg": "soft",
 };
 
 const racialSlurs = {
   "avttre": "", // Racist
-  "avttn": "", // Small-racist
+  "avttn": "", // Semi-racist
 };
 
 const sexual = {
@@ -86,7 +94,7 @@ const sexual = {
   "onyyf": "",
   "ubeal": "",
   "betl": "",
-  "gjng": ""
+  "gjng": "",
 };
 
 const filterNameToWords = {
@@ -96,14 +104,7 @@ const filterNameToWords = {
   "sexual": sexual
 };
 
-// Apply filters
-for (let filter in filterNameToWords) {
-  getChromeAttr(filter, null).then(currentSetting => {
-    if (currentSetting) {badWords = {...badWords, ...filterNameToWords[filter]};}
-  });
-}
-
-let wordRegExMemoization = new Object;
+let decryptedBadWordsHardRegExp, decryptedBadWordsSoftRegExp;
 
 const findText = (element) => {
   if (element.hasChildNodes()) {
@@ -114,48 +115,9 @@ const findText = (element) => {
   }
 }
 
-const ytSpecialChar = (textElement) => {
-  try {
-    if (textElement.parentElement.className === "captions-text" || 
-    textElement.parentElement.className === "ytp-caption-segment") {
-      // replace the no break space with a normal space for detection purposes
-      textElement.textContent = textElement.textContent.replace(/ /gi, " ");
-      textElement.textContent = textElement.textContent.replace(/\[ __ \]/gi, " ████ ");
-    }
-  } catch(e) {} // pass
-}
-
-const wordCheck = (textElement, encryptedBadWord) => {
-  let regExpWord;
-
-  // IF word not memoized: create and store its RegEx search pattern
-  if (!wordRegExMemoization[encryptedBadWord]) {
-    const decryptedBadWord = decrypt(encryptedBadWord);
-    // IF word is truncated strictly (not commonly composing other words)
-    if (!badWords[encryptedBadWord]) {
-      regExpWord = RegExp(decryptedBadWord, "gi");
-    } else {
-      regExpWord = RegExp(`(\\s|[^a-zA-Z]|^)${decryptedBadWord}(\\s|[^a-zA-Z]|$\)`, "gi")
-    }
-    wordRegExMemoization[encryptedBadWord] = regExpWord;
-  }
-
-  regExpWord = wordRegExMemoization[encryptedBadWord];
-  
-  let bleep;
-  badWords[encryptedBadWord] === "soft"
-  ? bleep = " ████ "
-  : bleep = "████";
-
-  textElement.textContent = textElement.textContent.replace(regExpWord, bleep);
-};
-
 const replaceText = (textElement) => {
-  for (let encryptedBadWord in badWords) {
-    encryptedBadWord === "[ __ ]"
-    ? ytSpecialChar(textElement)
-    : wordCheck(textElement, encryptedBadWord);
-  }
+  textElement.textContent = textElement.textContent.replace(decryptedBadWordsSoftRegExp, softBleep);
+  textElement.textContent = textElement.textContent.replace(decryptedBadWordsHardRegExp, bleep);
 }
 
 const decrypt = (word) => {
@@ -168,15 +130,37 @@ const decrypt = (word) => {
 }
 
 // Parse all text on initial load
-findText(document.body);
+async function initialLoad() {
+  // Apply filters
+  for (let filter in filterNameToWords) {
+    let currentSetting = await getChromeAttr(filter, null);
+    if (currentSetting) 
+      badWords = {...badWords, ...filterNameToWords[filter]};
+  }
+
+  let softWords = [];
+  let hardWords = [];
+  for (let [encryptedWord, isSoft] of Object.entries(badWords)) {
+    (isSoft)
+    ? softWords.push('(\\s|[^a-zA-Z]|^)' + decrypt(encryptedWord) + '(\\s|[^a-zA-Z]|$\)')
+    : hardWords.push(decrypt(encryptedWord));
+  }
+  softWords.push(youtubeRegex);
+
+  decryptedBadWordsSoftRegExp = createGrandRegexForMultipleWords(softWords);
+  decryptedBadWordsHardRegExp = createGrandRegexForMultipleWords(hardWords);
+  
+  findText(document.body);
+  dynamicMO.observe(document.body, {subtree: true, childList: true});
+}
 
 // newTextMO for dynamic text
-new MutationObserver((mutations) => {
+const dynamicMO = new MutationObserver((mutations) => {
   document.querySelectorAll('[contenteditable]').forEach(createInputEventListener);
   mutations.forEach((mutation) => {
     mutation.addedNodes.forEach(findText);
   });
-}).observe(document.body, {subtree: true, childList: true});
+});
 
 
 function createInputEventListener(el) {
@@ -193,3 +177,5 @@ function createInputEventListener(el) {
     }, 10);
   });
 }
+
+initialLoad();

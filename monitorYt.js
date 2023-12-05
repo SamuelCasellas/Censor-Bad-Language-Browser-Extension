@@ -1,6 +1,8 @@
 'use strict';
-let settingsButton, video;
+let video, settingsButton;
 const censorBlock = "████";
+const displayOff = 'display: none !important;';
+const displayOn = '';
 
 let showYtSubtitles = false;
 let timingCensorOn = false;
@@ -20,138 +22,123 @@ const clearAllChildren = (parent) => {
   } catch (e) {}
 };
 
-let hasEnglishCaptions = false;
+
+const settingsButtonQS = '.ytp-settings-button';
+const settingsMenuClass = 'ytp-settings-menu';
+const captionWindowClass = 'ytp-panel-menu';
+const youtubeCaptionsQS = '.ytp-caption-window-container';
+
 let sentenceCaptions = false;
 let adShowing = false;
 let firstAdShown = false;
 let singleThreshold = false;
 
 // Entry-point
-const adMOSetUp = () => {
-  // try {
-    new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          let adContainerClassList = mutation.target.classList;
-          if (!(adContainerClassList.contains("ad-playing")
-          || adContainerClassList.contains("ad-showing")
-          || singleThreshold)) {
-            singleThreshold = true;
-            firstAdShown = true;
-            adShowing = false;
-            setUpSubtitles();
-          }
-          else if (adContainerClassList.contains("ad-playing")
-          || adContainerClassList.contains("ad-showing")) {
-            singleThreshold = false;
-            adShowing = true;
-          }
-      });
-    }).observe(document.querySelector(".html5-video-player"), {attributes: true});
-  // } catch (e) {}
+const adMOSetUp = async() => {
+  new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        let adContainerClassList = mutation.target.classList;
+        if (!(adContainerClassList.contains("ad-playing")
+        || adContainerClassList.contains("ad-showing")
+        || singleThreshold)) {
+          singleThreshold = true;
+          firstAdShown = true;
+          adShowing = false;
+          setUpSubtitles();
+        }
+        else if (adContainerClassList.contains("ad-playing")
+        || adContainerClassList.contains("ad-showing")) {
+          singleThreshold = false;
+          adShowing = true;
+        }
+    });
+  }).observe(await selectElementPersist(".html5-video-player", 'qS'), {attributes: true});
 };
 
 // First load
 if (location.href.includes("youtube.com/watch?")) {
-  settingsButton = document.querySelector(".ytp-settings-button");
-  video = document.querySelector("video");
+  selectElementPersist(settingsButtonQS).then(button => settingsButton = button);
+  selectElementPersist('video').then(vid => video = vid);
   adMOSetUp();
 }
 
-const captionOperationSteps = [
-  // Step 1: Click the settings button to access its menu options.
-  function() {
-    setTimeout(() => {
-      let adContainer = document.querySelector(".video-ads");
-      try {   
-        if (adContainer.hasChildNodes() && !firstAdShown) {
-          adShowing = true;
-        } else {
-          settingsButton.click();
-          let settings = document.body.getElementsByClassName("ytp-settings-menu")[0];
-          settings.setAttribute("style", "display: none;");
-        }
-      } catch (e) {
-        console.log(e);
-        settingsButton.click();
-        let settings = document.body.getElementsByClassName("ytp-settings-menu")[0];
-        settings.setAttribute("style", "display: none;");
-      }
-    }, 200);
-  },
-  // Step 2: Click on the subtitles button to open the subtitles.
-  function() {
-    if (adShowing) return;
-    let settings = document.body.getElementsByClassName("ytp-settings-menu")[0];
-    settings.setAttribute("style", "display: none;");
-    // Not all videos have the same number of menu items when settings is selected.
-    // Survey each one.
-    let menuItems = settings.childNodes[0].childNodes[0].childNodes;
-    // Find subtitles option and click it.
-    menuItems.forEach((menuItem) => {
-      let itemLabelText = menuItem.childNodes.item(1).textContent;
-      if (itemLabelText != "Annotations" && itemLabelText != "Playback speed" && itemLabelText != "Quality") 
-        menuItem.click();
-        // What is this for?
-        // wait until the screen has updated with the available subtitles: wait time 0.7 seconds
-    });
-  },
-  // Step 3: Wait until the screen has updated with the available subtitles before selecting
-  function() {
-    if (adShowing) return;
-    const captionsAvailable = document.getElementsByClassName("ytp-panel-menu")[0].childNodes;
-
-    // See if the video has English captions provided by creator. 
-    // These are preferred.
-    captionsAvailable.forEach((caption) => {
-      if (caption.firstChild.innerText.includes("English") && 
-      !caption.firstChild.innerText.includes("(auto-generated)")) {
-        caption.click();
-        hasEnglishCaptions = true;
-        sentenceCaptions = true;
-        settingsButton.click();
-        let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-        if (!showYtSubtitles && currentCaptionWindow) 
-          currentCaptionWindow.style = "display: none !important;";
-      }
-    });
-    if (sentenceCaptions) return;
-    // If not, see if the video has English captions provided by YouTube.
-    captionsAvailable.forEach((caption) => {
-      if (caption.firstChild.innerText.includes("English (auto-generated)")) {
-        caption.click();
-        hasEnglishCaptions = true;
-        settingsButton.click();
-        let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-        if (!showYtSubtitles) currentCaptionWindow.style = "display: none !important;";
-      }
-    });
-  },
-  // Step 4: Begin observing captions
-  function() {
-    if (!hasEnglishCaptions && !adShowing) alert("Censoring unavailable for this video.");
-    if (adShowing || !hasEnglishCaptions) return;
-    
-    // Step 3: Begin observing the caption screen for mutations (added text nodes).
-    // Must be a specific snapshot of the caption screen (not its constant static reference).
-    let currentCaptionWindow = document.getElementsByClassName("ytp-caption-window-container")[0];
-    try {
-      if (!(showYtSubtitles || timingCensorOn))
-        currentCaptionWindow.style = "display: none !important;";
-    } catch (e) {}
-    // Use this function to clear any subtitles that may have already been said to start afresh.
-    clearAllChildren(currentCaptionWindow);
-    
-    // Begin observing
-    // try {
-      captionPresenceObserver.observe(currentCaptionWindow, {childList: true});
-    // } catch (e) {}
+// 1
+async function openSubtitles() {
+  console.assert(settingsButton);
+  settingsButton.click();
+  let settingsMenu = await selectElementPersist(settingsMenuClass, 'byClass');
+  settingsMenu.setAttribute("style", displayOff);
+  const menuItems = Array.from(settingsMenu.childNodes[0].childNodes[0].childNodes);
+  const subtitleButton = menuItems.find(item => item.childNodes.item(1).textContent.includes('Subtitles'));
+  if (!subtitleButton) {
+    // Close
+    settingsMenu.style = displayOn;
+    settingsButton.click();
+    return false;
   }
-];
+  subtitleButton.click();
+  return true;
+}
 
-function setUpSubtitles() {
-  // carry out timely executions
-  for (let i = 0; i < captionOperationSteps.length; i++) {
-    setTimeout(captionOperationSteps[i], (i) * 600);
+// 2
+async function selectSubtitle() {
+  // English captions provided by video creator are generally preferred
+  const settingsMenu = document.body.getElementsByClassName("ytp-settings-menu")[0];
+  await thisNumSeconds(0.7);
+  let captionsAvailable = Array.from(document.getElementsByClassName("ytp-panel-menu")[1].childNodes)
+
+  const regex = /^(?=.*English)(?!.*\(auto-generated\)).*$/i;
+
+  let englishCaption = captionsAvailable.find(c => regex.test(c.firstChild.innerText));
+  if (!englishCaption) {
+    englishCaption = captionsAvailable.find(c => c.firstChild.innerText.includes('English (auto-generated)'));
+    if (!englishCaption) {
+      // Close
+      settingsMenu.style = displayOn;
+      settingsButton.click();
+      return false;
+    }
+  } else {
+    sentenceCaptions = true;
+  }
+  // Turn on selected caption
+  englishCaption.click();
+  // Close
+  settingsMenu.style = displayOn;
+  settingsButton.click();
+  
+  return true;
+}
+
+// 3
+async function beginObservingCaptions() {  
+  // Step 3: Begin observing the caption screen for mutations (added text nodes).
+  // Must be a specific snapshot of the caption screen (not its constant static reference).
+  let currentCaptionWindow = await selectElementPersist(youtubeCaptionsQS);
+  if (!showYtSubtitles && currentCaptionWindow) {
+    currentCaptionWindow.style = displayOff;
+  }
+
+  if (!(showYtSubtitles || timingCensorOn)) {
+    currentCaptionWindow.style = displayOff;
+  }
+
+  // Use this function to clear any subtitles that may have already been said to start afresh.
+  // TODO: Maybe use this as a censor since the operation should be quicker with these new updates?
+  clearAllChildren(currentCaptionWindow);
+  
+  captionPresenceObserver.observe(currentCaptionWindow, {childList: true});
+}
+
+async function setUpSubtitles() {
+  if (await openSubtitles()) {
+    if (await selectSubtitle()) {
+      beginObservingCaptions();
+    } else {
+      alert("Censoring unavailable for this video. (Failure 2)");
+    }
+  } else {
+    alert("Censoring unavailable for this video. (Failure 1)");
   }
 };
 
@@ -161,11 +148,10 @@ let currentURL = location.href;
 new MutationObserver(() => {
   if (currentURL === location.href) return;
   currentURL = location.href;
-  console.log("New url!");
   if (location.href.includes("youtube.com/watch")) {
-    settingsButton = document.querySelector(".ytp-settings-button");
-    video = document.querySelector("video");
-    hasEnglishCaptions = adShowing = firstAdShown = singleThreshold = sentenceCaptions = false;
+    selectElementPersist(settingsButtonQS).then(button => settingsButton = button);
+    selectElementPersist('video').then(vid => video = vid);
+    adShowing = firstAdShown = singleThreshold = sentenceCaptions = false;
     adMOSetUp();
   }
 }).observe(document.head, {childList: true, subtree: true});
@@ -312,7 +298,6 @@ let mutedTime;
 let wordQueue = new Queue(2);
 // Mute by time first, then if the next word has not been said yet, wait until that word
 const censorWord = (textNode, vid, extraTime=false) => {
-  console.log(wordQueue);
   wordQueue.enqueue(textNode.trim().toLowerCase());
   if (textNode.includes(censorBlock)) {
     vid.muted = true;
